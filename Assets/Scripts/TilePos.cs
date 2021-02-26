@@ -4,30 +4,28 @@ using UnityEngine;
 
 public class TilePos
 {
-    int xPos, yPos;
-
+    int x, y;
     Vector2[] uvs;
 
-    public TilePos(int xPos, int yPos)
+    public TilePos(int x, int y)
     {
-        this.xPos = xPos;
-        this.yPos = yPos;
+        this.x = x;
+        this.y = y;
         uvs = new Vector2[]
         {
-            new Vector2(xPos/16f + .001f, yPos/16f + .001f),
-            new Vector2(xPos/16f+ .001f, (yPos+1)/16f - .001f),
-            new Vector2((xPos+1)/16f - .001f, (yPos+1)/16f - .001f),
-            new Vector2((xPos+1)/16f - .001f, yPos/16f+ .001f),
+            new Vector2(x/16f, y/16f),
+            new Vector2(x/16f, (y+1)/16f),
+            new Vector2((x+1)/16f, (y+1)/16f),
+            new Vector2((x+1)/16f, y/16f)
         };
     }
 
-    public Vector2[] GetUVs()
+    public Vector2[] GetUvs()
     {
         return uvs;
     }
 
-
-    public static Dictionary<Tile, TilePos> tiles = new Dictionary<Tile, TilePos>()
+    public static Dictionary<Tile, TilePos> tiles = new Dictionary<Tile, TilePos>() 
     {
         {Tile.Dirt, new TilePos(0,0)},
         {Tile.Grass, new TilePos(1,0)},
@@ -37,7 +35,7 @@ public class TilePos
         {Tile.TreeCX, new TilePos(0,3)},
         {Tile.Leaves, new TilePos(0,5)},
     };
+    
 }
 
 public enum Tile { Dirt, Grass, GrassSide, Stone, TreeSide, TreeCX, Leaves }
-
