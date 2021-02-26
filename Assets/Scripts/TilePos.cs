@@ -13,10 +13,10 @@ public class TilePos
         this.y = y;
         uvs = new Vector2[]
         {
-            new Vector2(x/16f, y/16f),
-            new Vector2(x/16f, (y+1)/16f),
-            new Vector2((x+1)/16f, (y+1)/16f),
-            new Vector2((x+1)/16f, y/16f)
+            new Vector2(x/16f + .001f, y/16f + .001f),
+            new Vector2(x/16f+ .001f, (y+1)/16f - .001f),
+            new Vector2((x+1)/16f - .001f, (y+1)/16f - .001f),
+            new Vector2((x+1)/16f - .001f, y/16f+ .001f),
         };
     }
 

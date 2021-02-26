@@ -31,8 +31,6 @@ namespace Attempt1
                     int cubePosY = Mathf.FloorToInt(hitInfo.point.y);
                     int cubePosZ = Mathf.FloorToInt(hitInfo.point.z);
 
-
-
                 }
             }
         }

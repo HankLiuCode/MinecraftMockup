@@ -32,10 +32,10 @@ public class TerrainChunk : MonoBehaviour
                     // top
                     Vector3 blockPos = new Vector3(x, y, z);
 
-                    bool makeBack = IsOutOfRange(x, y, z + 1) ? false : (blocks[x, y, z + 1] == BlockType.Air);
-                    bool makeRight = IsOutOfRange(x + 1, y, z) ? false : (blocks[x + 1, y, z] == BlockType.Air);
-                    bool makeFront = IsOutOfRange(x, y, z - 1) ? false : (blocks[x, y, z - 1] == BlockType.Air);
-                    bool makeLeft = IsOutOfRange(x - 1, y, z) ? false : (blocks[x - 1, y, z] == BlockType.Air);
+                    bool makeBack = (IsOutOfRange(x, y, z + 1) ? false : (blocks[x, y, z + 1] == BlockType.Air)) || (z == chunkWidth - 1);
+                    bool makeRight = (IsOutOfRange(x + 1, y, z) ? false : (blocks[x + 1, y, z] == BlockType.Air)) || (x == chunkWidth - 1);
+                    bool makeFront = (IsOutOfRange(x, y, z - 1) ? false : (blocks[x, y, z - 1] == BlockType.Air)) || (z == 0);
+                    bool makeLeft = (IsOutOfRange(x - 1, y, z) ? false : (blocks[x - 1, y, z] == BlockType.Air)) || (x == 0);
                     bool makeTop = (IsOutOfRange(x, y + 1, z) ? false : (blocks[x, y + 1, z] == BlockType.Air)) || (y == chunkHeight - 1);
                     bool makeBottom = IsOutOfRange(x, y - 1, z) ? false : (blocks[x, y - 1, z] == BlockType.Air);
 

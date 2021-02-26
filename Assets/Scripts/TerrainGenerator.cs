@@ -5,6 +5,7 @@ using UnityEngine;
 public class TerrainGenerator : MonoBehaviour
 {
     public GameObject terrainChunkPrefab;
+    public GameObject waterChunkPrefab;
 
     public Transform player;
     public List<Vector3> debugList;
@@ -12,7 +13,7 @@ public class TerrainGenerator : MonoBehaviour
     public int chunkDist = 2;
 
     public static Dictionary<ChunkPos, TerrainChunk> chunks = new Dictionary<ChunkPos, TerrainChunk>(new ChunkPosEqualityComparer());
-    public ChunkPos curChunk = new ChunkPos(-1, -1);
+    public ChunkPos curChunk = new ChunkPos(Mathf.RoundToInt(-Mathf.Infinity), Mathf.RoundToInt(-Mathf.Infinity));
 
 
     private void Start()
@@ -29,33 +30,53 @@ public class TerrainGenerator : MonoBehaviour
     {
         int curChunkPosX = Mathf.FloorToInt(player.position.x / TerrainChunk.chunkWidth) * TerrainChunk.chunkWidth;
         int curChunkPosZ = Mathf.FloorToInt(player.position.z / TerrainChunk.chunkWidth) * TerrainChunk.chunkWidth;
+        int curChunkPosY = Mathf.FloorToInt(player.position.y / TerrainChunk.chunkHeight) * TerrainChunk.chunkHeight;
+
         // Debug.LogFormat("{0},{1}", curChunkPosX, curChunkPosZ);
 
-        for(int i= curChunkPosX - TerrainChunk.chunkWidth * chunkDist; i < curChunkPosX + TerrainChunk.chunkWidth * chunkDist; i+= TerrainChunk.chunkWidth)
+        if(curChunk.xPos != curChunkPosX || curChunk.zPos != curChunkPosZ)
         {
-            for (int j = curChunkPosZ - TerrainChunk.chunkWidth * chunkDist; j < curChunkPosZ + TerrainChunk.chunkWidth * chunkDist; j += TerrainChunk.chunkWidth)
+            curChunk.xPos = curChunkPosX;
+            curChunk.zPos = curChunkPosZ;
+
+            for (int i = curChunkPosX - TerrainChunk.chunkWidth * chunkDist; i < curChunkPosX + TerrainChunk.chunkWidth * chunkDist; i += TerrainChunk.chunkWidth)
             {
-                ChunkPos cpos = new ChunkPos(i, j);
-                Debug.LogFormat("{0},{1}", i, j);
-                if (!chunks.ContainsKey(cpos))
+                for (int j = curChunkPosZ - TerrainChunk.chunkWidth * chunkDist; j < curChunkPosZ + TerrainChunk.chunkWidth * chunkDist; j += TerrainChunk.chunkWidth)
                 {
-                    BuildChunk(i, j);
+                    ChunkPos cpos = new ChunkPos(i, j);
+                    if (!chunks.ContainsKey(cpos))
+                    {
+                        BuildChunk(i, 0, j);
+                    }
                 }
             }
         }
 
+        List<ChunkPos> toDestroy = new List<ChunkPos>();
+        foreach(KeyValuePair<ChunkPos, TerrainChunk> chunk in chunks)
+        {
+            if(Mathf.Abs(chunk.Key.xPos - curChunk.xPos) > TerrainChunk.chunkWidth * (chunkDist + 1) || Mathf.Abs(chunk.Key.zPos - curChunk.zPos) > TerrainChunk.chunkWidth * (chunkDist + 1)) {
+                toDestroy.Add(chunk.Key);
+            }
+        }
+
+        foreach(ChunkPos cp in toDestroy)
+        {
+            Destroy(chunks[cp].gameObject);
+            chunks.Remove(cp);
+        }
     }
 
-    public void BuildChunk(int xPos, int zPos)
+    public void BuildChunk(int xPos, int yPos, int zPos)
     {
-        GameObject chunkGO = Instantiate(terrainChunkPrefab, new Vector3(xPos, 0, zPos), Quaternion.identity);
+        GameObject chunkGO = Instantiate(terrainChunkPrefab, new Vector3(xPos, yPos, zPos), Quaternion.identity);
         TerrainChunk chunk = chunkGO.GetComponent<TerrainChunk>();
 
         for (int x = 0; x < TerrainChunk.chunkWidth; x++)
             for (int z = 0; z < TerrainChunk.chunkWidth; z++)
                 for (int y = 0; y < TerrainChunk.chunkHeight; y++) 
                 {
-                    chunk.blocks[x, y, z] = GetBlockType(xPos + x, y, zPos + z);
+                    chunk.blocks[x, y, z] = GetBlockType(xPos + x, yPos + y, zPos + z);
                 }
 
         chunk.BuildMesh();
@@ -65,10 +86,6 @@ public class TerrainGenerator : MonoBehaviour
 
     BlockType GetBlockType(int x, int y, int z)
     {
-        /*if(y < 33)
-            return BlockType.Dirt;
-        else
-            return BlockType.Air;*/
 
         //print(noise.GetSimplex(x, z));
         float simplex1 = noise.GetSimplex(x * .8f, z * .8f) * 10;
@@ -103,6 +120,10 @@ public class TerrainGenerator : MonoBehaviour
         {
             blockType = BlockType.Dirt;
 
+            //just on the surface, use a grass type
+            if (y > baseLandHeight - 1)
+                blockType = BlockType.Grass;
+
             if (y <= baseStoneHeight)
                 blockType = BlockType.Stone;
         }
@@ -122,32 +143,32 @@ public class TerrainGenerator : MonoBehaviour
 
         return blockType;
     }
+}
 
-    public class ChunkPos
+public class ChunkPos
+{
+    public int xPos, zPos;
+    public ChunkPos(int xPos, int zPos)
     {
-        public int xPos, zPos;
-        public ChunkPos(int xPos, int zPos)
-        {
-            this.xPos = xPos;
-            this.zPos = zPos;
-        }
+        this.xPos = xPos;
+        this.zPos = zPos;
+    }
+}
+
+public class ChunkPosEqualityComparer : IEqualityComparer<ChunkPos>
+{
+    public bool Equals(ChunkPos c1, ChunkPos c2)
+    {
+        return GetHashCode(c1) == GetHashCode(c2);
+
     }
 
-    public class ChunkPosEqualityComparer : IEqualityComparer<ChunkPos>
+    public int GetHashCode(ChunkPos obj)
     {
-        public bool Equals(ChunkPos c1, ChunkPos c2)
-        {
-            return GetHashCode(c1) == GetHashCode(c2);
-
-        }
-
-        public int GetHashCode(ChunkPos obj)
-        {
-            int x = obj.xPos;
-            int y = obj.zPos;
-            int xx = x >= 0 ? x * 2 : x * -2 - 1;
-            int yy = y >= 0 ? y * 2 : y * -2 - 1;
-            return (xx >= yy) ? (xx * xx + xx + yy) : (yy * yy + xx);
-        }
+        int x = obj.xPos;
+        int y = obj.zPos;
+        int xx = x >= 0 ? x * 2 : x * -2 - 1;
+        int yy = y >= 0 ? y * 2 : y * -2 - 1;
+        return (xx >= yy) ? (xx * xx + xx + yy) : (yy * yy + xx);
     }
 }
